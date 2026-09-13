@@ -22,6 +22,7 @@
     <ScoreSaberDetectedTargetVersion Condition="'$(ScoreSaberDetectedTargetVersion)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(ScoreSaberDetectedGameVersion)', '^(1\.38\.0|1\.39\.[01])$'))">1.38.0</ScoreSaberDetectedTargetVersion>
     <ScoreSaberDetectedTargetVersion Condition="'$(ScoreSaberDetectedTargetVersion)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(ScoreSaberDetectedGameVersion)', '^1\.40\.[0-8]$'))">1.40.0</ScoreSaberDetectedTargetVersion>
     <ScoreSaberDetectedTargetVersion Condition="'$(ScoreSaberDetectedTargetVersion)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(ScoreSaberDetectedGameVersion)', '^(1\.42\.[0-3]|1\.43\.0|1\.44\.[01])$'))">1.42.0</ScoreSaberDetectedTargetVersion>
+    <ScoreSaberDetectedTargetVersion Condition="'$(ScoreSaberDetectedTargetVersion)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(ScoreSaberDetectedGameVersion)', '^1\.45\.[0-9]+$'))">1.45.0</ScoreSaberDetectedTargetVersion>
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == '' AND '$(ScoreSaberTargetVersionExplicit)' != 'true' AND '$(ScoreSaberDetectedTargetVersion)' != ''">$(ScoreSaberDetectedTargetVersion)</ScoreSaberTargetVersion>
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == '' AND '$(Platform)' == 'BS1.29.0'">1.29.0</ScoreSaberTargetVersion>
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == '' AND '$(Platform)' == 'BS1.37.1'">1.37.1</ScoreSaberTargetVersion>
@@ -30,7 +31,7 @@
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == '' AND '$(Platform)' == 'BS1.42.0'">1.42.0</ScoreSaberTargetVersion>
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == ''">$(ScoreSaberDefaultTargetVersion)</ScoreSaberTargetVersion>
     <LegatoSourceVersion>1.44.1</LegatoSourceVersion>
-    <LegatoTargetVersion>$(ScoreSaberTargetVersion)</LegatoTargetVersion>
+    <LegatoTargetVersion>1.44.1</LegatoTargetVersion>
     <ScoreSaberRefsRoot Condition="'$(ScoreSaberRefsRoot)' == '' AND Exists('$(RepositoryRoot)refs')">$(RepositoryRoot)refs</ScoreSaberRefsRoot>
     <ScoreSaberRefsRoot Condition="'$(ScoreSaberRefsRoot)' == '' AND Exists('$(RepositoryRoot)Refs')">$(RepositoryRoot)Refs</ScoreSaberRefsRoot>
     <ScoreSaberRefsRoot Condition="'$(ScoreSaberRefsRoot)' == ''">$(RepositoryRoot)refs</ScoreSaberRefsRoot>
@@ -480,4 +481,20 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+  <Target Name="ScoreSaberRemoveObsoleteLegatoPolyfills" BeforeTargets="CoreCompile" DependsOnTargets="LegatoAddOptionalSources">
+    <PropertyGroup>
+      <DefineConstants>$([System.String]::Copy('$(DefineConstants)').Replace('BEAT_SABER_1_42_0;', '').Replace(';BEAT_SABER_1_42_0', '').Replace('BEAT_SABER_1_42_0', ''))</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup>
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\BeatmapEditorScenesTransitionSetupData\BeatmapEditorScenesTransitionSetupData.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\LevelScenesTransitionSetupData\LevelScenesTransitionSetupData.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\MultiplayerLevelScenesTransitionSetupData\MultiplayerLevelScenesTransitionSetupData.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\ScenesTransitionSetupData\ScenesTransitionSetupData.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\StandardLevelScenesTransitionSetupData\StandardLevelScenesTransitionSetupData.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\OculusVRHelper\OculusVRHelperInputFocusPatch.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\PauseController\PauseControllerHeadsetEventsPatch.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Polyfills\GlobalNamespace\BeatmapCharacteristicSegmentedControlController\BeatmapCharacteristicSelectionSubscription.cs" />
+      <Compile Remove="$(LegatoSourceRoot)Library\Beatmaps\BeatmapMaxScoreCache.cs" />
+    </ItemGroup>
+  </Target>
 </Project>
