@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -164,9 +165,14 @@ namespace ScoreSaber.Features.Live.Compete.Services {
         }
 
         private static float RecommendedFpsThreshold() {
-            float refreshRate = UnityEngine.XR.XRDevice.refreshRate;
-            if (refreshRate <= 0f) {
-                refreshRate = FallbackRefreshRate;
+            float refreshRate = FallbackRefreshRate;
+            var displays = new List<UnityEngine.XR.XRDisplaySubsystem>();
+            SubsystemManager.GetSubsystems(displays);
+            foreach (var display in displays) {
+                if (display.running && display.TryGetDisplayRefreshRate(out float rate) && rate > 0f) {
+                    refreshRate = rate;
+                    break;
+                }
             }
 
             return Mathf.Max(1f, Mathf.Round(Mathf.Round(refreshRate) / 5f) * 5f - 5f);
