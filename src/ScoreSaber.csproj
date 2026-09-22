@@ -104,6 +104,8 @@
     <Compile Include="Compatibility\ScoreSaber\**\Versions\$(ScoreSaberTargetVersion)\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="System.IO.Compression" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\System.IO.Compression.dll" Private="false" />
+    <Reference Include="System.Net.Http" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\System.Net.Http.dll" Private="false" />
     <Reference Include="AdditionalContentModel.Interfaces" Condition="Exists('$(GameReferences)\Beat Saber_Data\Managed\AdditionalContentModel.Interfaces.dll')">
       <HintPath>$(GameReferences)\Beat Saber_Data\Managed\AdditionalContentModel.Interfaces.dll</HintPath>
       <Private>False</Private>
@@ -480,11 +482,11 @@
     <PackageReference Include="LegatoBS" PrivateAssets="all" />
     <PackageReference Include="BeatSaberModdingTools.Tasks">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <IncludeAssets>build; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <IncludeAssets>build; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
   <Target Name="ScoreSaberRemoveObsoleteLegatoPolyfills" BeforeTargets="CoreCompile" DependsOnTargets="LegatoAddOptionalSources">
