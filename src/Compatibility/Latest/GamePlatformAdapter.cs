@@ -4,13 +4,18 @@ using Legato.Platform.Authentication;
 using Legato.Platform.Friends;
 using Legato.Platform.Users;
 using OculusStudios.Platform.Core;
+using Steamworks;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Legato.Platform {
-    public class GamePlatformAdapter : IPlatformUserProvider, IPlatformAuthenticationProvider, IPlatformFriendsProvider {
+    public class GamePlatformAdapter : IPlatformUserProvider, IPlatformAuthenticationProvider, IPlatformFriendsProvider, IDisposable {
         private readonly IPlatform _platform;
+        private readonly CancellationTokenSource _lifetime = new();
+        private HAuthTicket _steamTicket = HAuthTicket.Invalid;
+        private Task<string>? _steamTicketTask;
 
         public GamePlatformAdapter(IPlatform platform) => _platform = platform;
 
@@ -32,7 +37,61 @@ namespace Legato.Platform {
             return Task.FromResult(new UserInfo(platform, _platform.user.userId.ToString(), _platform.user.displayName));
         }
 
-        public Task<string> GetAuthToken() => _platform.user.GetAccessTokenAsync();
+        public Task<string> GetAuthToken() {
+            _lifetime.Token.ThrowIfCancellationRequested();
+            if (_platform.key != "steam") return _platform.user.GetAccessTokenAsync();
+            if (_steamTicketTask == null || _steamTicketTask.IsFaulted || _steamTicketTask.IsCanceled) {
+                _steamTicketTask = GetSteamTicket();
+            }
+            return _steamTicketTask;
+        }
+
+        private async Task<string> GetSteamTicket() {
+            var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var ticket = HAuthTicket.Invalid;
+            using var callback = Callback<GetTicketForWebApiResponse_t>.Create(response => {
+                if (response.m_hAuthTicket != ticket) return;
+                if (response.m_eResult != EResult.k_EResultOK || response.m_rgubTicket == null ||
+                    response.m_cubTicket <= 0 || response.m_cubTicket > response.m_rgubTicket.Length) {
+                    completion.TrySetException(new InvalidOperationException($"Steam ticket request failed: {response.m_eResult}"));
+                    return;
+                }
+                completion.TrySetResult(BitConverter.ToString(response.m_rgubTicket, 0, response.m_cubTicket).Replace("-", ""));
+            });
+            try {
+                // The game's access token is restricted to oculus-xplat-backend.
+                // ScoreSaber needs its own Web API ticket, without that recipient.
+                ticket = SteamUser.GetAuthTicketForWebApi(string.Empty);
+                if (ticket == HAuthTicket.Invalid) throw new InvalidOperationException("Steam did not issue an authentication ticket");
+                _steamTicket = ticket;
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+                var delay = Task.Delay(TimeSpan.FromSeconds(15), timeout.Token);
+                if (await Task.WhenAny(completion.Task, delay) != completion.Task) {
+                    _lifetime.Token.ThrowIfCancellationRequested();
+                    throw new TimeoutException("Steam authentication ticket timed out");
+                }
+                timeout.Cancel();
+                _lifetime.Token.ThrowIfCancellationRequested();
+                return await completion.Task;
+            } catch {
+                ReleaseSteamTicket();
+                throw;
+            }
+        }
+
+        private void ReleaseSteamTicket() {
+            if (_steamTicket == HAuthTicket.Invalid) return;
+            SteamUser.CancelAuthTicket(_steamTicket);
+            _steamTicket = HAuthTicket.Invalid;
+        }
+
+        public void Dispose() {
+            if (_lifetime.IsCancellationRequested) return;
+            _lifetime.Cancel();
+            // Keep the ticket valid until the server has verified it, not just
+            // until Steam supplies the bytes to GetAuthToken.
+            ReleaseSteamTicket();
+        }
 
         public Task<string> GetCrossPlatformAccessToken(CancellationToken _) => _platform.user.GetXPlatformAccessTokenAsync(false);
 
