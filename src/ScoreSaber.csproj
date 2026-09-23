@@ -11,7 +11,7 @@
     <ScoreSaberUserProjectFile>$(MSBuildProjectFullPath).user</ScoreSaberUserProjectFile>
     <ScoreSaberUserBeatSaberDir Condition="'$(ScoreSaberUserBeatSaberDir)' == '' AND Exists('$(ScoreSaberUserProjectFile)')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ScoreSaberUserProjectFile)')), '(?s)&lt;BeatSaberDir&gt;\s*(.*?)\s*&lt;/BeatSaberDir&gt;').Groups.get_Item(1).Value)</ScoreSaberUserBeatSaberDir>
     <BeatSaberDir Condition="'$(ScoreSaberUserBeatSaberDir)' != ''">$(ScoreSaberUserBeatSaberDir)</BeatSaberDir>
-    <ScoreSaberDefaultTargetVersion Condition="'$(ScoreSaberDefaultTargetVersion)' == ''">1.42.0</ScoreSaberDefaultTargetVersion>
+    <ScoreSaberDefaultTargetVersion Condition="'$(ScoreSaberDefaultTargetVersion)' == ''">1.45.0</ScoreSaberDefaultTargetVersion>
     <ScoreSaberTargetVersionExplicit Condition="'$(ScoreSaberTargetVersion)' != ''">true</ScoreSaberTargetVersionExplicit>
     <ScoreSaberSelectedBeatSaberDir Condition="'$(ScoreSaberSelectedBeatSaberDir)' == '' AND '$(BeatSaberDir)' != ''">$(BeatSaberDir)</ScoreSaberSelectedBeatSaberDir>
     <ScoreSaberSelectedBeatSaberDir Condition="'$(ScoreSaberSelectedBeatSaberDir)' == '' AND '$(GameDirectory)' != ''">$(GameDirectory)</ScoreSaberSelectedBeatSaberDir>
@@ -32,6 +32,11 @@
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == '' AND '$(Platform)' == 'BS1.40.0'">1.40.0</ScoreSaberTargetVersion>
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == '' AND '$(Platform)' == 'BS1.42.0'">1.42.0</ScoreSaberTargetVersion>
     <ScoreSaberTargetVersion Condition="'$(ScoreSaberTargetVersion)' == ''">$(ScoreSaberDefaultTargetVersion)</ScoreSaberTargetVersion>
+    <BeatSaberDir Condition="'$(BeatSaberDir)' == '' AND '$(ScoreSaberTargetVersion)' == '1.45.0'">D:\BSManager\BSInstances\1.45.1</BeatSaberDir>
+    <FrameworkPathOverride Condition="'$(BeatSaberDir)' != ''">$(BeatSaberDir)\Beat Saber_Data\Managed</FrameworkPathOverride>
+    <ImportBSMTTargets>true</ImportBSMTTargets>
+    <CopyPDB>false</CopyPDB>
+    <DisableCopyToGame>false</DisableCopyToGame>
     <LegatoSourceVersion>1.44.1</LegatoSourceVersion>
     <LegatoTargetVersion>1.44.1</LegatoTargetVersion>
     <ScoreSaberRefsRoot Condition="'$(ScoreSaberRefsRoot)' == '' AND Exists('$(RepositoryRoot)refs')">$(RepositoryRoot)refs</ScoreSaberRefsRoot>
@@ -476,7 +481,6 @@
   </ItemGroup>
   <ItemGroup>
     <OutputCopy Include="$(OutputPath)$(AssemblyName).dll" OutputPath="Plugins\$(AssemblyName).dll" />
-    <OutputCopy Include="$(OutputPath)$(AssemblyName).pdb" OutputPath="Plugins\$(AssemblyName).pdb" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="LegatoBS" PrivateAssets="all" />
