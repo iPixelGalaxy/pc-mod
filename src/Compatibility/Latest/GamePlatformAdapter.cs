@@ -81,8 +81,13 @@ namespace Legato.Platform {
 
         private void ReleaseSteamTicket() {
             if (_steamTicket == HAuthTicket.Invalid) return;
-            SteamUser.CancelAuthTicket(_steamTicket);
-            _steamTicket = HAuthTicket.Invalid;
+            try {
+                SteamUser.CancelAuthTicket(_steamTicket);
+            } catch (InvalidOperationException exception) when (exception.Message == "Steamworks is not initialized.") {
+                // Steam has already invalidated its tickets during shutdown.
+            } finally {
+                _steamTicket = HAuthTicket.Invalid;
+            }
         }
 
         public void Dispose() {
