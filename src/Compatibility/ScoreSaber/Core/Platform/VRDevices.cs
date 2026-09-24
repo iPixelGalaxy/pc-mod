@@ -31,9 +31,6 @@ namespace ScoreSaber.Core.Platform {
 
             if (currentRuntime.IndexOf("steam", StringComparison.OrdinalIgnoreCase) >= 0 && SteamSettings.HMDName != null)
                 hmd = $"{hmd}:(steamcfg):{SteamSettings.HMDName}";
-            if (OpenXRManager.HMDName != null)
-                hmd = $"{hmd}:(openxr):{OpenXRManager.HMDName}";
-
             return $"{currentRuntime}:{hmd}";
         }
 

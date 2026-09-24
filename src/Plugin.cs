@@ -60,7 +60,6 @@ namespace ScoreSaber {
 
             LibVersion = Assembly.GetExecutingAssembly().GetName().Version;
             HttpInstance = new Http(new HttpOptions() { baseURL = ScoreSaberEndpoints.ApiBaseUrl, applicationName = "ScoreSaber-PC", version = LibVersion });
-            OpenXRManager.Initialize();
             SteamSettings.Initialize();
         }
 
@@ -74,6 +73,13 @@ namespace ScoreSaber {
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
                 PlayerPrefs.SetInt("lbPatched", 1);
             }
+        }
+
+        [OnDisable]
+        public void OnDisable() {
+            MainMenuAwaiter.MainMenuInitializing -= MainMenuInit;
+            harmony?.UnpatchSelf();
+            harmony = null;
         }
 
         private void MainMenuInit() {
