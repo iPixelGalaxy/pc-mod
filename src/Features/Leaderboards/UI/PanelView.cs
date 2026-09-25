@@ -139,7 +139,7 @@ namespace ScoreSaber.Features.Leaderboards.UI {
         }
 
         protected void OnDisable() {
-            KillPromptTweens();
+            ClearPrompt();
             Disabled?.Invoke();
         }
 
@@ -202,6 +202,13 @@ namespace ScoreSaber.Features.Leaderboards.UI {
         public void SetPromptError(string status, bool showLoadingIndicator, float dismissTime = PromptDismissNever) => SetPrompt($"<color=#fc8181>{status}</color>", showLoadingIndicator, dismissTime);
 
         public void SetPromptSuccess(string status, bool showLoadingIndicator, float dismissTime = PromptDismissNever) => SetPrompt($"<color=#89fc81>{status}</color>", showLoadingIndicator, dismissTime);
+
+        internal void ClearPrompt() {
+            KillPromptTweens();
+            _promptText = string.Empty;
+            NotifyPropertyChanged(nameof(promptText));
+            SetPromptInactive();
+        }
 
         public void SetPrompt(string status, bool showLoadingIndicator, float dismissTime = PromptDismissNever) {
             if (!_settings.Current.showStatusText) {

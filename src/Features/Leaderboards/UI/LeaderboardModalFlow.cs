@@ -112,7 +112,7 @@ namespace ScoreSaber.Features.Leaderboards.UI {
                 byte[] replay = await _replayQueryService.GetReplayData(score);
                 _panelView.SetPromptInfo("Replay downloaded! Unpacking...", true);
                 await _replayLoader.Load(replay, score.Parent.BeatmapLevel, score.Parent.BeatmapKey, score.GameplayModifiers, score.Score.Player.Name);
-                _panelView.SetPromptSuccess("Replay Started!", false, 1f);
+                _panelView.ClearPrompt();
             } catch (ReplayVersionException ex) {
                 _panelView.SetPromptError("Unsupported replay version", false);
                 Plugin.Log.Error($"Failed to start replay (unsupported version): {ex}");
