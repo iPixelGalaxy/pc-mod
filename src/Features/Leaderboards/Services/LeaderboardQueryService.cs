@@ -24,14 +24,14 @@ namespace ScoreSaber.Features.Leaderboards.Services {
             Plugin.Log.Debug("LeaderboardQueryService Setup");
         }
 
-        public async Task<LeaderboardMap> GetLeaderboardData(int maxMultipliedScore, BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LeaderboardScreenScope scope, int page, bool filterAroundCountry, CancellationToken cancellationToken) {
+        public async Task<LeaderboardMap> GetLeaderboardData(BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LeaderboardScreenScope scope, int page, bool filterAroundCountry, CancellationToken cancellationToken) {
 
             LeaderboardQuery query = GetLeaderboardQuery(beatmapKey, scope, page, filterAroundCountry);
             LeaderboardSnapshot snapshot = await _apiClient.GetLeaderboard(query, _gameSessionService.GameSession, cancellationToken);
             _playerScoreCache.Remember(query, GetPlayerId(), snapshot.PlayerScore);
 
             Plugin.Log.Debug($"Current leaderboard set to: {beatmapKey.levelId}:{beatmapLevel.songName}");
-            return new LeaderboardMap(snapshot, beatmapLevel, beatmapKey, maxMultipliedScore, _replayStorageService);
+            return new LeaderboardMap(snapshot, beatmapLevel, beatmapKey, snapshot.Leaderboard.MaxScore, _replayStorageService);
         }
 
         private LeaderboardQuery GetLeaderboardQuery(BeatmapKey beatmapKey, LeaderboardScreenScope scope, int page, bool filterAroundCountry) {

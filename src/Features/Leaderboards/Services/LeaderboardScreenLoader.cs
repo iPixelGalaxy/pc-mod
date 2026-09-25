@@ -11,19 +11,16 @@ namespace ScoreSaber.Features.Leaderboards.Services {
     internal class LeaderboardScreenLoader {
         private readonly BeatmapLevelsModel _beatmapLevelsModel;
         private readonly LeaderboardQueryService _leaderboardQueryService;
-        private readonly BeatmapMaxScoreCache _maxScoreCache;
         private readonly GameSessionService _gameSessionService;
         private readonly SettingsService _settings;
 
         public LeaderboardScreenLoader(
             BeatmapLevelsModel beatmapLevelsModel,
             LeaderboardQueryService leaderboardQueryService,
-            BeatmapMaxScoreCache maxScoreCache,
             GameSessionService gameSessionService,
             SettingsService settings) {
             _beatmapLevelsModel = beatmapLevelsModel;
             _leaderboardQueryService = leaderboardQueryService;
-            _maxScoreCache = maxScoreCache;
             _gameSessionService = gameSessionService;
             _settings = settings;
         }
@@ -52,10 +49,9 @@ namespace ScoreSaber.Features.Leaderboards.Services {
             }
 
             bool filterAroundCountry = ShouldFilterAroundCountry(scope);
-            int maxScore = await _maxScoreCache.GetMaxScore(beatmapLevel, beatmapKey);
             LeaderboardMap leaderboard;
             try {
-                leaderboard = await _leaderboardQueryService.GetLeaderboardData(maxScore, beatmapLevel, beatmapKey, scope, page, filterAroundCountry, cancellationToken);
+                leaderboard = await _leaderboardQueryService.GetLeaderboardData(beatmapLevel, beatmapKey, scope, page, filterAroundCountry, cancellationToken);
             } catch (GeneratedApiException ex) when (IsLeaderboardNotFoundResponse(ex)) {
                 return LeaderboardScreenState.Failed(
                     LeaderboardScreenStatus.NoLeaderboard,
