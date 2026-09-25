@@ -62,6 +62,8 @@ namespace ScoreSaber.Features.Replays.Legacy {
 
         public void Initialize() {
             SetupCameras();
+            _presentation.SuppressFpfcCameraInput(_desktopCamera);
+            _presentation.SuppressFpfcCameraInput(_spectatorCamera);
             _presentation.AttachAudioListener(_desktopCamera);
             _presentation.PrepareSabers();
             _fpfcSettings.AddChangedListener(fpfcSettings_Changed);
@@ -117,6 +119,9 @@ namespace ScoreSaber.Features.Replays.Legacy {
 
         public void Tick() {
 
+            _presentation.SuppressFpfcCameraInput(_desktopCamera);
+            _presentation.SuppressFpfcCameraInput(_spectatorCamera);
+
             if (_keyframes.Count < 2) {
                 return;
             }
@@ -152,6 +157,7 @@ namespace ScoreSaber.Features.Replays.Legacy {
 
             var pos = Vector3.Lerp(keyframe1._pos3, keyframe2._pos3, t);
             Quaternion rot = Quaternion.Lerp(keyframe1._rot3, keyframe2._rot3, t);
+            _presentation.UpdateCameraWorldPose(pos, rot);
             _playerTransforms._headTransform.SetPositionAndRotation(pos, rot);
             var eulerAngles = rot.eulerAngles;
             Vector3 headRotationOffset = new Vector3(_settings.Current.replayCameraXRotation, _settings.Current.replayCameraYRotation, _settings.Current.replayCameraZRotation);

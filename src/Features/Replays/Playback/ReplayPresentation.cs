@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using ScoreSaber.Features.Replays.Compatibility;
 using UnityEngine;
 
 namespace ScoreSaber.Features.Replays.Playback {
     internal sealed class ReplayPresentation : IDisposable {
         private readonly PlayerVRControllersManager _controllers;
         private readonly List<AudioListener> _disabledListeners = new List<AudioListener>();
+        private readonly Dictionary<Behaviour, bool> _fpfcControllerStates = new Dictionary<Behaviour, bool>();
+        private readonly Camera2ReplaySource _camera2Source = new Camera2ReplaySource();
         private DeactivateVRControllersOnFocusCapture _focusCapture;
         private bool _focusCaptureWasEnabled;
         private bool _leftWasActive;
@@ -65,7 +68,33 @@ namespace ScoreSaber.Features.Replays.Playback {
             Plugin.Log.Info($"Replay audio listener: {_replayListener.name}");
         }
 
+        public void SuppressFpfcCameraInput(Camera camera) {
+            if (camera == null) return;
+            foreach (var component in camera.GetComponents<MonoBehaviour>()) {
+                if (component == null) continue;
+                var typeName = component.GetType().FullName;
+                if (typeName != "SiraUtil.Tools.FPFC.SimpleCameraController" && typeName != "FirstPersonFlyingController") continue;
+                var controller = (Behaviour)component;
+                if (!_fpfcControllerStates.ContainsKey(controller)) {
+                    _fpfcControllerStates.Add(controller, controller.enabled);
+                    Plugin.Log.Info($"Suppressing FPFC camera input on {camera.name}");
+                }
+                if (controller.enabled) controller.enabled = false;
+            }
+        }
+
+        public void UpdateCameraPose(Transform origin, Vector3 localPosition, Quaternion localRotation) =>
+            _camera2Source.UpdateFromOrigin(origin, localPosition, localRotation);
+
+        public void UpdateCameraWorldPose(Vector3 position, Quaternion rotation) =>
+            _camera2Source.UpdateWorld(position, rotation);
+
         public void Dispose() {
+            _camera2Source.Dispose();
+            foreach (var pair in _fpfcControllerStates) {
+                if (pair.Key != null) pair.Key.enabled = pair.Value;
+            }
+            _fpfcControllerStates.Clear();
             if (_replayListener != null) {
                 if (_createdReplayListener) UnityEngine.Object.Destroy(_replayListener);
                 else _replayListener.enabled = _replayListenerWasEnabled;

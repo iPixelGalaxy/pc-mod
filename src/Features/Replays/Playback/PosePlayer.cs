@@ -44,6 +44,8 @@ namespace ScoreSaber.Features.Replays.Playback {
         public void Initialize() {
 
             SetupCameras();
+            _presentation.SuppressFpfcCameraInput(_desktopCamera);
+            _presentation.SuppressFpfcCameraInput(_spectatorCamera);
             _presentation.AttachAudioListener(_desktopCamera);
             _presentation.PrepareSabers();
             _fpfcSettings.AddChangedListener(fpfcSettings_Changed);
@@ -101,6 +103,9 @@ namespace ScoreSaber.Features.Replays.Playback {
 
         public void Tick() {
 
+            _presentation.SuppressFpfcCameraInput(_desktopCamera);
+            _presentation.SuppressFpfcCameraInput(_spectatorCamera);
+
             if (ReachedEnd()) {
                 _returnToMenuController.ReturnToMenu();
                 return;
@@ -144,8 +149,12 @@ namespace ScoreSaber.Features.Replays.Playback {
             }
 
 
-            var pos = originParentTransform.TransformPoint(Vector3.Lerp(activePose.Head.Position.Convert(), nextPose.Head.Position.Convert(), lerpTime));
-            var rot = originParentTransform.rotation * Quaternion.Lerp(activePose.Head.Rotation.Convert(), nextPose.Head.Rotation.Convert(), lerpTime);
+            var localHeadPosition = Vector3.Lerp(activePose.Head.Position.Convert(), nextPose.Head.Position.Convert(), lerpTime);
+            var localHeadRotation = Quaternion.Lerp(activePose.Head.Rotation.Convert(), nextPose.Head.Rotation.Convert(), lerpTime);
+            var pos = originParentTransform.TransformPoint(localHeadPosition);
+            var rot = originParentTransform.rotation * localHeadRotation;
+
+            _presentation.UpdateCameraPose(originParentTransform, localHeadPosition, localHeadRotation);
 
             _playerTransforms._headTransform.SetPositionAndRotation(pos, rot);
 
