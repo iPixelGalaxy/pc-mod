@@ -7,6 +7,7 @@ using UnityEngine;
 using IPA.Utilities;
 using ScoreSaber.Core.Configuration;
 using ScoreSaber.Core.Gameplay;
+using ScoreSaber.Features.Replays.Playback;
 
 namespace ScoreSaber.Features.Replays.Legacy {
 
@@ -20,6 +21,7 @@ namespace ScoreSaber.Features.Replays.Legacy {
         private readonly SaberManager _saberManager;
         private readonly RoomSettings _roomSettings;
         private readonly SettingsService _settings;
+        private readonly ReplayPresentation _presentation;
         private PlayerTransforms _playerTransforms;
         private readonly IFPFCSettings _fpfcSettings;
         private ComboController _comboController;
@@ -35,17 +37,15 @@ namespace ScoreSaber.Features.Replays.Legacy {
         private int _multiplierIncreaseMaxProgress = 2;
         private int _playbackPreviousCombo;
         private int _playbackPreviousScore;
-        private bool _initialFPFCState;
         private List<Z.Keyframe> _keyframes;
 
         internal LegacyReplayPlayer(List<Z.Keyframe> keyframes, ScoreController scoreController,
             RelativeScoreAndImmediateRankCounter relativeScoreAndImmediateRankCounter, AudioTimeSyncController audioTimeSyncController,
-            MainCamera mainCamera, SaberManager saberManager, PlayerTransforms playerTransforms, IFPFCSettings fpfcSettings, ComboController comboController, RoomSettings roomSettings, SettingsService settings) {
+            MainCamera mainCamera, SaberManager saberManager, PlayerTransforms playerTransforms, IFPFCSettings fpfcSettings, ComboController comboController, RoomSettings roomSettings, SettingsService settings, PlayerVRControllersManager controllers) {
 
             _fpfcSettings = fpfcSettings;
             _comboController = comboController;
-            _initialFPFCState = fpfcSettings.Enabled;
-            _fpfcSettings.Enabled = false;
+            _presentation = new ReplayPresentation(controllers);
 
             _keyframes = keyframes;
             _scoreController = scoreController;
@@ -62,6 +62,8 @@ namespace ScoreSaber.Features.Replays.Legacy {
 
         public void Initialize() {
             SetupCameras();
+            _presentation.AttachAudioListener(_desktopCamera);
+            _presentation.PrepareSabers();
             _fpfcSettings.AddChangedListener(fpfcSettings_Changed);
             ScoreUIController.InitData data = new ScoreUIController.InitData(scoreDisplayType: ScoreUIController.ScoreDisplayType.MultipliedScore);
             _scoreUIController.SetField("_initData", data);
@@ -162,9 +164,7 @@ namespace ScoreSaber.Features.Replays.Legacy {
             pos.y += _settings.Current.replayCameraYOffset;
             pos.z += _settings.Current.replayCameraZOffset;
 
-            if (!_fpfcSettings.Enabled) {
-                _desktopCamera.transform.SetPositionAndRotation(Vector3.Lerp(_desktopCamera.transform.position, pos, t2), Quaternion.Lerp(_desktopCamera.transform.rotation, rot, t2));
-            }
+            _desktopCamera.transform.SetPositionAndRotation(Vector3.Lerp(_desktopCamera.transform.position, pos, t2), Quaternion.Lerp(_desktopCamera.transform.rotation, rot, t2));
 
             if (_scoreController != null && cutOrMissedNotes >= 1) {
                 UpdatePlaybackScore(keyframe1);
@@ -264,7 +264,7 @@ namespace ScoreSaber.Features.Replays.Legacy {
 
         public void Dispose() {
             _fpfcSettings.RemoveChangedListener(fpfcSettings_Changed);
-            _fpfcSettings.Enabled = _initialFPFCState;
+            _presentation.Dispose();
         }
     }
 }

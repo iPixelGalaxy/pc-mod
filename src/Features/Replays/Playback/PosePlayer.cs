@@ -17,6 +17,7 @@ namespace ScoreSaber.Features.Replays.Playback {
         private readonly IFPFCSettings _fpfcSettings;
         private readonly RoomSettings _roomSettings;
         private readonly SettingsService _settings;
+        private readonly ReplayPresentation _presentation;
         private readonly IReturnToMenuController _returnToMenuController;
         public event Action<VRPoseGroup> DidUpdatePose;
         private PlayerTransforms _playerTransforms;
@@ -25,13 +26,10 @@ namespace ScoreSaber.Features.Replays.Playback {
         private bool _saberEnabled = true;
         private Vector3 _spectatorOffset;
 
-        private bool initialFPFCState;
-
-        public PosePlayer(ReplayFile file, MainCamera mainCamera, SaberManager saberManager, IReturnToMenuController returnToMenuController, IFPFCSettings fpfcSettings, PlayerTransforms playerTransforms, RoomSettings roomSettings, SettingsService settings) {
+        public PosePlayer(ReplayFile file, MainCamera mainCamera, SaberManager saberManager, IReturnToMenuController returnToMenuController, IFPFCSettings fpfcSettings, PlayerTransforms playerTransforms, RoomSettings roomSettings, SettingsService settings, PlayerVRControllersManager controllers) {
 
             _fpfcSettings = fpfcSettings;
-            initialFPFCState = fpfcSettings.Enabled;
-            _fpfcSettings.Enabled = false;
+            _presentation = new ReplayPresentation(controllers);
 
             _mainCamera = mainCamera;
             _saberManager = saberManager;
@@ -46,8 +44,8 @@ namespace ScoreSaber.Features.Replays.Playback {
         public void Initialize() {
 
             SetupCameras();
-            _saberManager.leftSaber.transform.GetComponentInParent<VRController>().enabled = false;
-            _saberManager.rightSaber.transform.GetComponentInParent<VRController>().enabled = false;
+            _presentation.AttachAudioListener(_desktopCamera);
+            _presentation.PrepareSabers();
             _fpfcSettings.AddChangedListener(fpfcSettings_Changed);
         }
 
@@ -161,9 +159,7 @@ namespace ScoreSaber.Features.Replays.Playback {
             pos.y += _settings.Current.replayCameraYOffset;
             pos.z += _settings.Current.replayCameraZOffset;
 
-            if (!_fpfcSettings.Enabled) {
-                _desktopCamera.transform.SetPositionAndRotation(Vector3.Lerp(_desktopCamera.transform.position, pos, t2), Quaternion.Lerp(_desktopCamera.transform.rotation, rot, t2));
-            }
+            _desktopCamera.transform.SetPositionAndRotation(Vector3.Lerp(_desktopCamera.transform.position, pos, t2), Quaternion.Lerp(_desktopCamera.transform.rotation, rot, t2));
 
             DidUpdatePose?.Invoke(activePose);
         }
@@ -187,7 +183,7 @@ namespace ScoreSaber.Features.Replays.Playback {
 
         public void Dispose() {
             _fpfcSettings.RemoveChangedListener(fpfcSettings_Changed);
-            _fpfcSettings.Enabled = initialFPFCState;
+            _presentation.Dispose();
         }
     }
 }
